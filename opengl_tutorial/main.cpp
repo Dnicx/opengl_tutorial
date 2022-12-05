@@ -3,6 +3,8 @@
 #include <iostream>
 #include <stdio.h>
 
+#define DEBUG_SHADER
+
 void framebuffer_size_callback( GLFWwindow* window, int width, int height )
 {
     std::cout << "width " << width << " heigth " << height << std::endl;
@@ -14,6 +16,49 @@ void processInput( GLFWwindow *window )
 {
     if( glfwGetKey( window, GLFW_KEY_ESCAPE ) == GLFW_PRESS )
         glfwSetWindowShouldClose( window, true );
+}
+
+float vertices[] = {
+    -0.5f, -0.5f, 0.0f,
+    0.5f, -0.5f, 0.0f,
+    0.0f,  0.5f, 0.0f
+};
+
+const char* vertexShaderSource = R"""(
+#version 420 core
+layout ( location = 0 ) in vec3 aPos;
+void main()
+{
+    gl_Position = vec4( aPos.x, aPos.y, aPos.z, 1.0 );
+}
+)""";
+
+void constructTriangle(float* vertices )
+{
+    unsigned int VBO;
+    unsigned int vertexShader;
+
+    glGenBuffers( 1, &VBO );
+    vertexShader = glCreateShader( GL_VERTEX_SHADER );
+    
+    glBindBuffer( GL_ARRAY_BUFFER, VBO );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( *vertices ), vertices, GL_STATIC_DRAW );
+
+    glShaderSource( vertexShader, 1, &vertexShaderSource, NULL );
+    glCompileShader( vertexShader );
+
+#ifdef DEBUG_SHADER
+    int success;
+    char infoLog[ 512 ];
+    glGetShaderiv( vertexShader, GL_COMPILE_STATUS, &success );
+
+    if ( !success )
+    {
+        glGetShaderInfoLog( vertexShader, 512, NULL, infoLog );
+        std::cout << "ERROR::SHADER::VERTEX::COMPILE_FAILED\n" << infoLog << std::endl;
+    }
+#endif // DEBUG_SHADER
+
 }
 
 int main(void)
@@ -43,15 +88,17 @@ int main(void)
     } 
 
     glViewport( 0, 0, 800, 600 );
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor( 0.2f, 0.3f, 0.3f, 1.0f );
     glfwSetFramebufferSizeCallback( window, framebuffer_size_callback );
+
+    constructTriangle( vertices );
 
     while( !glfwWindowShouldClose( window ) )
     {
         processInput( window );
         glfwPollEvents();    
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear( GL_COLOR_BUFFER_BIT );
         glfwSwapBuffers( window );
     }
 
