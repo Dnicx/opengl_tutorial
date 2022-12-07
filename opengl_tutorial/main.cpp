@@ -33,13 +33,25 @@ void main()
 }
 )""";
 
+const char* fragmentShaderSource = R"""(
+#version 330 core
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+} 
+)""";
+
 void constructTriangle(float* vertices )
 {
     unsigned int VBO;
     unsigned int vertexShader;
+    unsigned int fragmentShader;
 
     glGenBuffers( 1, &VBO );
     vertexShader = glCreateShader( GL_VERTEX_SHADER );
+    fragmentShader = glCreateShader( GL_FRAGMENT_SHADER );
     
     glBindBuffer( GL_ARRAY_BUFFER, VBO );
     glBufferData( GL_ARRAY_BUFFER, sizeof( *vertices ), vertices, GL_STATIC_DRAW );
@@ -58,6 +70,28 @@ void constructTriangle(float* vertices )
         std::cout << "ERROR::SHADER::VERTEX::COMPILE_FAILED\n" << infoLog << std::endl;
     }
 #endif // DEBUG_SHADER
+
+    glShaderSource( fragmentShader, 1, &fragmentShaderSource, NULL );
+    glCompileShader( fragmentShader );
+
+#ifdef DEBUG_SHADER
+    glGetShaderiv( fragmentShader, GL_COMPILE_STATUS, &success );
+
+    if ( !success )
+    {
+        glGetShaderInfoLog( fragmentShader, 512, NULL, infoLog );
+        std::cout << "ERROR::SHADER::VERTEX::COMPILE_FAILED\n" << infoLog << std::endl;
+    }
+#endif // DEBUG_SHADER
+
+    unsigned int shaderProgram;
+    shaderProgram = glCreateProgram();
+
+    glAttachShader( shaderProgram, vertexShader );
+    glAttachShader( shaderProgram, fragmentShader );
+    glLinkProgram( shaderProgram );
+    glDeleteShader( vertexShader );
+    glDeleteShader( fragmentShader );
 
 }
 
